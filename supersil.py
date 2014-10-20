@@ -224,36 +224,37 @@ s3.Z0 = -ballradius-zshort
 s3.n2=nyso
 s3.app = 2*ballradius
 
-s4 = SphericalSurface()
-s4.curv = -1/ballradius
-s4.Z0 = ballradius+zshort
-s4.n1=nyso
-s4.app = 2*ballradius
+#s4 = SphericalSurface()
+#s4.curv = -1/ballradius
+#s4.Z0 = ballradius+zshort
+#s4.n1=nyso
+#s4.app = 2*ballradius
 
-s5 = Surface()
-s5.curv = -as1curv
-s5.kappa = as1kappa
-s5.Aparams = -as1Aparams
-s5.Z0 = 1.76-offset
-s5.n2 = nglass
+#s5 = Surface()
+#s5.curv = -as1curv
+#s5.kappa = as1kappa
+#s5.Aparams = -as1Aparams
+#s5.Z0 = 1.76-offset
+#s5.n2 = nglass
 
 
-s6 = Surface()
-s6.curv = -as2curv
-s6.kappa = as2kappa
-s6.Aparams = -as2Aparams
-s6.Z0 = 1.76+3.19-offset
-s6.n1 = nglass
+#s6 = Surface()
+#s6.curv = -as2curv
+#s6.kappa = as2kappa
+#s6.Aparams = -as2Aparams
+#s6.Z0 = 1.76+3.19-offset
+#s6.n1 = nglass
 
 s7=Surface()
-s7.Z0=8.5
+#s7.Z0=8.5
+s7.Z0=0.01
 
 surfs.append(s1)
 surfs.append(s2)
 surfs.append(s3)
-surfs.append(s4)
-surfs.append(s5)
-surfs.append(s6)
+#surfs.append(s4)
+#surfs.append(s5)
+#surfs.append(s6)
 surfs.append(s7)
 
 
