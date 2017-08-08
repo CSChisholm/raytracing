@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from pylab import *
 
 class Ray:
@@ -10,7 +11,7 @@ class Ray:
         r0 = self.r0
         l = self.length;
         r1 = (self.r0 + l*self.direction )
-        plot((r0[2],r1[2]),(r0[0],r1[0]),'b')
+        plt.plot((r0[2],r1[2]),(r0[0],r1[0]),'b')
 
 class SphericalSurface:
     def __init__(self):
@@ -82,9 +83,9 @@ def trace(ray_bundle,surf):
     #calculates the center of curvature of the surface
     if abs(surf.curv)>1/100:
         ccurv = array([0,0,surf.Z0+1./surf.curv])
-        print ccurv
+        print(ccurv)
     else:
-        print 'nope\n\n'
+        print('nope\n\n')
         ccurv = None
 
     count=0
@@ -92,7 +93,7 @@ def trace(ray_bundle,surf):
     #first determine value for s where the ray crosses the z= z0 plane
         #ccurv for the lens
         count=count+1
-        print "Ray = ",count
+        print("Ray = "+str(count))
         if type(ccurv)!=type(None):
             tv = (ray.r0-ccurv) #temp vector
             b = 2*dot(ray.direction,tv)
@@ -103,7 +104,7 @@ def trace(ray_bundle,surf):
                 s = s1
             else:
                 s = s2
-            print s1, s2, s,b**2-4*c
+            print(s1, s2, s,b**2-4*c)
             if b**2-4*c<0:
                 s = (ray.r0[2]-surf.Z0)/ray.direction[2]
         else:
@@ -130,7 +131,7 @@ def trace(ray_bundle,surf):
         
             newray = Ray()
             newray.r0 = r
-            print dot(ray.direction,normal)
+            print(dot(ray.direction,normal))
             a = surf.n1/surf.n2*dot(ray.direction,normal)
             b = ((surf.n1/surf.n2)**2-1)
             gamma = -b/(2*a)
@@ -160,7 +161,7 @@ def trace(ray_bundle,surf):
 
     
 
-close('all')
+plt.close('all')
 rays = []
 
 
@@ -264,7 +265,7 @@ for s in surfs:
     zvals = 0*xvals;
     for k in range(len(xvals)):
         zvals[k] = s.Zfunc(xvals[k]**2)
-    plot(zvals,xvals,'r')
+    plt.plot(zvals,xvals,'r')
 
     newrays = trace(rays,s)
     for r in rays:
@@ -275,10 +276,9 @@ for s in surfs:
 for r in rays:
     r.plot()
 
-
-axis([-5.5,5.5,-3,3])    
-axis('equal')
-
+plt.axis([-5.5,5.5,-3,3])    
+plt.axis('equal')
+plt.show()
 
 
 
