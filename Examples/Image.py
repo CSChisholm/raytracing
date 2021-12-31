@@ -150,21 +150,14 @@ def main():
     plt.figure()
     for s in surfs:
         xvals = np.linspace(-s.app,s.app,100)/2
-        zvals = 0*xvals;
-        for k in range(len(xvals)):
-            zvals[k] = s.Zfunc(xvals[k]**2)
+        zvals = [s.Zfunc(xval**2) for xval in xvals]
         plt.plot(zvals,xvals,'r')
-    
         newrays = rt.trace(rays,s)
         for r in rays:
             r.plot()
-    
         rays=newrays
-    
     for r in rays:
         r.plot()
-    
-    
     plt.axis([0,camerapos+50,-50,50])
     plt.xlabel('z [mm]')
     plt.ylabel('x, y [mm]')
