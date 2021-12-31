@@ -2,7 +2,7 @@
 
 [Original repository](https://github.com/jevonlongdell/raytracing)
 
-Implements [General Ray-Tacing Procedure](raytracing/Spencer-and-Murty_JOSA_52-6_1962.pdf)
+Implements [General Ray-Tacing Procedure](https://github.com/CSChisholm/raytracing/Spencer-and-Murty_JOSA_52-6_1962.pdf)
 
 ## Installation
 
@@ -23,7 +23,7 @@ python3 setup.py install
 from raytracing import raytracing as rt
 ```
 
-See [Examples](raytracing/examples).
+See [Examples](https://github.com/CSChisholm/raytracing/raytracing/Examples).
 
 The example scripts can be imported and run using
 ```python
