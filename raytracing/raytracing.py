@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as LA
+from scipy.optimize import brentq
 
 '''
 Code from Jevon Longdell for ray tracing
@@ -25,19 +26,22 @@ class SphericalSurface:
     '''Spherical surface'''
     def __init__(self):
         self.Z0 = 0 #Surface position along optical axis
-        self.curv = 0 #Curvature of surface
+        self.curv = 1 #Curvature of surface
         self.n1 = 1 #Refractive index to lef tof surface
         self.n2 = 2 #Refractive index to right of surface
         self.app = 6 #Apperature of surface
-        self.ccurv = np.array([0,0,self.Z0+1/self.curv]) #Centre of curvature of the surface
+    
+    def ccurv(self):
+        '''Centre of curvature of the surface'''
+        return np.array([0,0,self.Z0+1/self.curv])
 
     def Ffunc(self,r):
         '''This is the F of eq. 1 in Spencer and Murty'''
-        F = np.dot(r-self.ccurv,r-self.ccurv)-(1/self.curv)**2 #
+        F = np.dot(r-self.ccurv(),r-self.ccurv())-(1/self.curv)**2 #
         return F
     
     def gradFfunc(self,r):
-        return 2*(r - self.ccurv)
+        return 2*(r - self.ccurv())
     
     def Zfunc(self,ssq):
         #not used in calcs
@@ -55,7 +59,11 @@ class Surface:
         self.n1 = 1.0 #Refractive index to lef tof surface
         self.n2 = 1.0 #Refractive index to right of surface
         self.app = 6 #Apperature of surface
-        
+    
+    def ccurv(self):
+        '''Centre of curvature of the surface'''
+        return np.array([0,0,self.Z0+1/self.curv])    
+    
     def Zfunc(self,ssq):
         c = self.curv
         Z = self.Z0 + c*ssq/(1+np.sqrt(1-self.kappa*c*c*ssq))
@@ -85,13 +93,66 @@ class Surface:
         Fz = 1
         return np.array([Fx,Fy,Fz])
 
+class Ball:
+    #the inside is defined as the region F>0
+    def __init__(self):
+        self.center = np.array([0,0,0])
+        self.radius = 1
+        self.n_inside = 1.0
+        self.n_outside = 1.8
+        self.label = 'round thing'
+    
+    def __str__(self):
+        return f'Ball with label {self.label}'
+    
+    def plot(self):
+        thetavals = np.linspace(0,2*np.pi,1024)
+        zvals = self.center[2]+self.radius*np.sin(thetavals)
+        xvals = self.center[0]+self.radius*np.cos(thetavals)
+        plt.plot(zvals,xvals,'r')
+    
+    def Ffunc(self,r):
+        '''returns radius^2 - |r-center|^2'''
+        return self.radius**2 - np.dot(r-self.center,r-self.center)
+    
+    def gradFfunc(self,r):
+        return 2*(self.center-r)
+                
+    def find_intersect(self,ray):
+        '''does the ray intercept the surface if so how far along ray? if not return -1'''
+        s0 = 1e-5 #start this distance along the ray so that we don't get confused by the surface we have just passed thru
+        if (self.Ffunc(ray.r0+s0*ray.direction)>0): #do we start of inside the sphere
+            #code for if we do:
+            #if you go three radii in any direction you are definatley outside the sphere so this point is definately outside the sphere
+            soutside = 3*self.radius
+            #now we have values of s that bracket the intercept we can find it
+            s = brentq(lambda x: self.Ffunc(ray.r0+x*ray.direction),s0,soutside)
+            return s
+        else:
+            #code for if we start outside sphere
+            #s for closest point to the center
+            s_closest = np.dot(self.center-ray.r0,ray.direction)
+            if s_closest < s0:
+                return -1 #we are outside and heading away from center
+            #f value for closest point to the center
+            F_closest = self.Ffunc(ray.r0+s_closest*ray.direction)
+            if (F_closest<0): #ray never hits sphere
+                return -1
+            else:
+                #s_closest and 0 are on different sides of the sphere
+                s = brentq(lambda x: self.Ffunc(ray.r0+x*ray.direction),0,s_closest)
+                return s
+        #we should never reach this point
+        #this is a way to make sure we know if we do
+        assert(False) 
+
 def trace(ray_bundle,surf):
     '''Perform the ray tracing procedure'''
     new_ray_bundle = []
 
     #calculates the center of curvature of the surface
-    if abs(surf.curv)>1/100:
-        ccurv = np.array([0,0,surf.Z0+1./surf.curv])
+    if (abs(surf.curv)>1/100):
+        ccurv = surf.ccurv()
         print(f'{ccurv}')
     else:
         print('nope\n\n')
@@ -152,6 +213,66 @@ def trace(ray_bundle,surf):
             assert(k<25)
             newray.direction = surf.n1/surf.n2*ray.direction+gamma*normal
         assert(np.absolute(np.absolute(LA.norm(newray.direction)-1))<1e-8)
+        new_ray_bundle.append(newray)
+    return new_ray_bundle
+
+def traceball(ray_bundle,surfs):
+    new_ray_bundle=[]
+
+    for ray in ray_bundle:
+        # work out the next surface for the ray to hit
+        # do this by working out all the surfaces the ray
+        # intesects and choosing the smallest value of s
+        smin=np.inf
+        nextsurf = None
+        for surf in surfs:
+            s = surf.find_intersect(ray)
+            #print(surf,s)
+            if s>=0:
+                if s<smin:
+                    smin=s
+                    nextsurf=surf
+        if not(np.isfinite(smin)):
+            print("Ray missed all the surfaces")
+            assert(False)
+        ray.length=smin
+        r = ray.r0+(smin)*ray.direction
+        normal = nextsurf.gradFfunc(r)
+        normal = normal/LA.norm(normal)
+        newray = Ray()
+        newray.r0 = r
+        newray.length=0.2
+        #this chooses the direction of the new ray
+        n1 = nextsurf.n_outside
+        n2 = nextsurf.n_inside
+        # if either of the refractive indicies are infinite
+        # then act like is't s a mirror
+        # otherwise use snells law
+        if (np.isfinite(nextsurf.n_outside) and np.isfinite(nextsurf.n_inside)):
+            # donesn't look like snells law
+            # but see the a paper
+            if (np.dot(ray.direction,normal)<0):
+                n2 = nextsurf.n_outside
+                n1 = nextsurf.n_inside
+            else:
+                n1 = nextsurf.n_outside
+                n2 = nextsurf.n_inside     
+            a = n1/n2*np.dot(ray.direction,normal)
+            b = ((n1/n2)**2-1)
+            gamma = -b/(2*a)
+            for k in range(30):
+                gammanew = (gamma**2-b)/(2*(gamma+a))
+                if abs(gamma-gammanew) <1e-8:
+                    gamma = gammanew
+                    break
+                gamma=gammanew
+            #make sure iterative approach has converged 
+            assert(k<25)
+            newray.direction = n1/n2*ray.direction+gamma*normal
+            assert(np.absolute(LA.norm(newray.direction)-1)<1e-8)
+        else:
+            #mirror
+            newray.direction = ray.direction - 2*np.dot(ray.direction,normal)*normal        
         new_ray_bundle.append(newray)
     return new_ray_bundle
 
