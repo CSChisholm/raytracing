@@ -19,5 +19,14 @@ python3 setup.py install
 ```
 
 ## Use
-`from raytracing import raytracing as rt`
+```python
+from raytracing import raytracing as rt
+```
+
 See [Examples](raytracing/examples).
+
+The example scripts can be imported and run using
+```python
+from raytracing import Examples as rtExamples
+rtExamples.Imaging.main() 
+```
