@@ -1,37 +1,40 @@
+#!/usr/bin/env python3
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as LA
 
-#Python code from Jevon Longdell for ray tracing
+#Code from Jevon Longdell for ray tracing
 
 class Ray:
+    '''A ray object to pass to trace()'''
     def __init__(self):
-        self.direction = np.array([0,0,1])
-        self.r0 = np.array([0,0,0])
-        self.length = 0
+        self.direction = np.array([0,0,1]) #The propagation direction of the ray
+        self.r0 = np.array([0,0,0]) #The start point of the ray
+        self.length = 0 #The length of the ray
         self.wavelength = 589 #Wavelength in nm
+        
     def plot(self):
-        r0 = self.r0
-        l = self.length;
-        r1 = self.r0 + l*self.direction
-        plt.plot((r0[2],r1[2]),(r0[0],r1[0]),'b')
+        '''Plot the ray'''
+        r1 = self.r0 + self.length*self.direction
+        plt.plot((self.r0[2],r1[2]),(self.r0[0],r1[0]),'b')
 
 class SphericalSurface:
+    '''Spherical surface'''
     def __init__(self):
-        self.Z0 = 0
-        self.curv = 0
-        self.n1=1.
-        self.n2=2.
-        self.app=6.
+        self.Z0 = 0 #Surface position along optical axis
+        self.curv = 0 #Curvature of surface
+        self.n1 = 1 #Refractive index to lef tof surface
+        self.n2 = 2 #Refractive index to right of surface
+        self.app = 6 #Apperature of surface
+        self.ccurv = np.array([0,0,self.Z0+1/self.curv]) #Centre of curvature of the surface
 
     def Ffunc(self,r):
-        ccurv = [0,0,self.Z0+1/self.curv]
-        F = np.dot(r-ccurv,r-ccurv)-(1/self.curv)**2
+        '''This is the F of eq. 1 in Spencer and Murty'''
+        F = np.dot(r-self.ccurv,r-self.ccurv)-(1/self.curv)**2 #
         return F
     
     def gradFfunc(self,r):
-        ccurv = [0,0,self.Z0+1/self.curv]
-        return 2*(r - ccurv)
+        return 2*(r - self.ccurv)
     
     def Zfunc(self,ssq):
         #not used in calcs
@@ -39,17 +42,16 @@ class SphericalSurface:
         Z = self.Z0 + c*ssq/(1+np.sqrt(1-c*c*ssq))
         return Z
 
-
 class Surface:
     
     def __init__(self):
-        self.Z0 = 0
-        self.curv = 0
-        self.kappa = 1 #=1+k
-        self.Aparams = np.array([])
-        self.n1 = 1.0
-        self.n2 = 1.0
-        self.app = 6
+        self.Z0 = 0 #Surface position along optical axis
+        self.curv = 0 #Curvature of surface
+        self.kappa = 1 #=1+k, k = Conic coefficient
+        self.Aparams = np.array([]) #Polynomial coefficients of asphere
+        self.n1 = 1.0 #Refractive index to lef tof surface
+        self.n2 = 1.0 #Refractive index to right of surface
+        self.app = 6 #Apperature of surface
         
     def Zfunc(self,ssq):
         c = self.curv
@@ -59,6 +61,7 @@ class Surface:
         return Z
 
     def Ffunc(self,r):
+        '''This is the F of eq. 1 in Spencer and Murty'''
         x = r[0]
         y = r[1]
         z = r[2]
@@ -69,13 +72,11 @@ class Surface:
     def gradFfunc(self,r):
         x = r[0]
         y = r[1]
-        z = r[2]
         ssq = x*x+y*y
         c = self.curv
         E = c/np.sqrt(1-self.kappa*c*c*ssq)
         for k in range(len(self.Aparams)):
             E = E + 2*(2+k)*self.Aparams[k]*ssq**(1+k) #this could be wrong
-        F = z-self.Zfunc(ssq)
         Fx = -x*E
         Fy = -y*E
         Fz = 1
@@ -84,6 +85,7 @@ class Surface:
 
 
 def trace(ray_bundle,surf):
+    '''Perform the ray tracing procedure'''
     new_ray_bundle = []
 
     #calculates the center of curvature of the surface
@@ -96,7 +98,7 @@ def trace(ray_bundle,surf):
 
     count=0
     for ray in ray_bundle:
-    #first determine value for s where the ray crosses the z= z0 plane
+    #first determine value for s where the ray crosses the z = z0 plane
         #ccurv for the lens
         count+=1
         print(f'Ray = {count}')
@@ -147,28 +149,14 @@ def trace(ray_bundle,surf):
                     break
                 gamma = gammanew
             assert(k<25)
-
             newray.direction = surf.n1/surf.n2*ray.direction+gamma*normal
-
-
-
         assert(np.absolute(np.absolute(LA.norm(newray.direction)-1))<1e-8)
-
         new_ray_bundle.append(newray)
+    return new_ray_bundle
 
-    return (new_ray_bundle)
-
-plt.close('all')
-
-#Define a function for partial sum
 def partialsum(vector,ind):
-    sum1 = 0
-    index = range(ind+1)
-    for element in index:
-        sum1+=vector[element]
-    
-    return (sum1)
-    
+    '''A function for partial sum'''
+    return np.sum(vector[:(ind+1)])
 
 def lensparam(fin):
     '''Parameters of 2" plano-convex lenses from Thorlabs'''
@@ -199,6 +187,8 @@ def lensparam(fin):
     return surfradout, centhickout
 
 def main():
+    plt.close('all')
+    
     #Some parameters
     nBK7 = 1.517
     
