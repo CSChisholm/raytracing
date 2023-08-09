@@ -16,11 +16,12 @@ class Ray:
         self.r0 = np.array([0,0,0]) #The start point of the ray
         self.length = 0 #The length of the ray
         self.wavelength = 589 #Wavelength in nm
+        self.colour = 'C0'
         
     def plot(self):
         '''Plot the ray'''
         r1 = self.r0 + self.length*self.direction
-        plt.plot((self.r0[2],r1[2]),(self.r0[0],r1[0]),'b')
+        plt.plot((self.r0[2],r1[2]),(self.r0[0],r1[0]),c=self.colour)
 
 class SphericalSurface:
     '''Spherical surface'''
@@ -109,7 +110,7 @@ class Ball:
         thetavals = np.linspace(0,2*np.pi,1024)
         zvals = self.center[2]+self.radius*np.sin(thetavals)
         xvals = self.center[0]+self.radius*np.cos(thetavals)
-        plt.plot(zvals,xvals,'r')
+        plt.plot(zvals,xvals,'C3')
     
     def Ffunc(self,r):
         '''returns radius^2 - |r-center|^2'''
@@ -192,6 +193,7 @@ def trace(ray_bundle,surf):
             newray = Ray()
             newray.r0 = ray.r0
             newray.direction = ray.direction
+            newray.colour = ray.colour
         else:
             ray.length = snew
             r = ray.r0 + snew*ray.direction
@@ -200,6 +202,7 @@ def trace(ray_bundle,surf):
 
             newray = Ray()
             newray.r0 = r
+            newray.colour = ray.colour
             print(f'{np.dot(ray.direction,normal)}')
             a = surf.n1/surf.n2*np.dot(ray.direction,normal)
             b = ((surf.n1/surf.n2)**2-1)
@@ -242,6 +245,7 @@ def traceball(ray_bundle,surfs):
         newray = Ray()
         newray.r0 = r
         newray.length=0.2
+        newray.colour = ray.colour
         #this chooses the direction of the new ray
         n1 = nextsurf.n_outside
         n2 = nextsurf.n_inside

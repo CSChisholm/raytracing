@@ -151,7 +151,7 @@ def main():
     for s in surfs:
         xvals = np.linspace(-s.app,s.app,100)/2
         zvals = [s.Zfunc(xval**2) for xval in xvals]
-        plt.plot(zvals,xvals,'r')
+        plt.plot(zvals,xvals,'C3')
         newrays = rt.trace(rays,s)
         for r in rays:
             r.plot()
